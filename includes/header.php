@@ -11,6 +11,7 @@
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/components/code-blocks.css">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/components/cards.css">
   <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/themes/light.css" id="theme-stylesheet">
+  <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/components/tables.css">
 </head>
 <body>
   <div class="layout">
