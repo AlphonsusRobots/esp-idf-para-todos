@@ -98,3 +98,25 @@
   margin: 2em 0;
   border-radius: 0 4px 4px 0;
 }
+
+.exercise-section {
+  margin: 2.5em 0;
+  padding: 15px;
+  background: #f0f7ff;
+  border-radius: 6px;
+  text-align: center;
+}
+
+.btn-exercise {
+  display: inline-block;
+  background: #2980b9;
+  color: white;
+  padding: 10px 20px;
+  text-decoration: none;
+  border-radius: 4px;
+  font-weight: bold;
+}
+
+.btn-exercise:hover {
+  background: #1c5980;
+}

@@ -18,7 +18,37 @@ h1 {
   color: green;
   font-weight: bold;
 }
+img.diagram {
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em 0;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  display: block;
+}
+.quiz-button-container {
+  margin: 2.5em 0;
+  text-align: center;
+}
 
+.btn-primary {
+  display: inline-block;
+  background: #2980b9;
+  color: white;
+  padding: 12px 24px;
+  text-decoration: none;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 1.1em;
+  transition: background 0.2s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.btn-primary:hover {
+  background: #1c5980;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
 /* /opt/lampp/htdocs/esp-idf-documentation/assets/css/main.css */
 * { box-sizing: border-box; }
 body { margin: 0; font-family: Arial, sans-serif; }

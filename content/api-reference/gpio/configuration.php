@@ -15,6 +15,12 @@ Piensa en un pin GPIO (General Purpose Input/Output o Entrada/Salida de Propósi
 
 En esta guía, aprenderás los fundamentos para configurar y controlar estos pines. Comencemos por el paso más importante: elegir el pin correcto para tu primer proyecto.
 </p>
+<img 
+  src="<?php echo BASE_URL; ?>/assets/images/diagrams/gpio/ESP32-DOIT-DEV-KIT-v-PINOUT.png" 
+  alt="Arquitectura de GPIO en ESP32"
+  class="diagram"
+>
+
 <h2>¡Cuidado! Eligiendo el Pin GPIO Correcto para tu Proyecto</h2>
 
 <p>Aunque el ESP32 ofrece muchos pines, no todos son iguales. Algunos tienen funciones especiales durante el arranque o están reservados para tareas internas. Para un principiante, es crucial evitar estos pines para no encontrarse con comportamientos inesperados.</p>
@@ -42,7 +48,7 @@ Ahora que sabes qué pines elegir, veamos cómo configurarlos.</p>
 
 <h2>El Corazón de la Configuración: La Estructura </h2>
 
-<p>EPara configurar los pines en el entorno de desarrollo ESP-IDF, la herramienta principal es la función gpio_config(). Su gran ventaja es que permite configurar uno o varios pines a la vez de forma organizada y eficiente.</p>
+<p>Para configurar los pines en el entorno de desarrollo ESP-IDF, la herramienta principal es la función <strong>gpio_config()</strong>. Su gran ventaja es que permite configurar uno o varios pines a la vez de forma organizada y eficiente.</p>
 
 <p>Esta función no recibe parámetros sueltos, sino que utiliza una estructura llamada gpio_config_t para agrupar todas las opciones de configuración. A continuación, desglosamos sus miembros más importantes.</p>
 
@@ -55,10 +61,10 @@ Ahora que sabes qué pines elegir, veamos cómo configurarlos.</p>
     </tr>
   </thead>
   <tbody>
-    <tr>
+     <tr>
       <td>pin_bit_mask</td>
       <td> &nbspMáscara de bits (un número)</td>
-      <td>Sirve para seleccionar los pines que quieres configurar. Cada bit representa un número de pin.</td>
+      <td>Sirve para seleccionar los pines que quieres configurar. Cada bit representa un número de pin. Se pueden configurar varios a la vez</td>
     </tr>
     <tr>
       <td>mode</td>
@@ -68,9 +74,14 @@ Ahora que sabes qué pines elegir, veamos cómo configurarlos.</p>
     <tr>
       <td>pull_up_en</td>
       <td>&nbsp1 (para activar) o 0 (para &nbspdesactivar)</td>
-      <td>Activa una resistencia interna que conecta el pin a un nivel de voltaje alto (pull-up).
-pull_down_en	1 (para activar) o 0 (para desactivar)	</td>
+      <td>Activa una resistencia interna que conecta el pin a un nivel de voltaje alto (pull-up).pull_down_en	1 (para activar) o 0 (para desactivar)	</td>
     </tr>
+     <tr>
+      <td>pull_down_en</td>
+      <td>&nbsp1 (para activar) o 0 (para &nbspdesactivar)</td>
+      <td>Activa una resistencia interna que conecta el pin a un nivel de voltaje alto (pull_down_en)	1 (para activar) o 0 (para desactivar)	</td>
+    </tr>
+    
   </tbody>
 </table>
 
@@ -78,12 +89,23 @@ pull_down_en	1 (para activar) o 0 (para desactivar)	</td>
 
 <div class="code-block-container">
   <pre><code>gpio_config_t io_conf = {};
-io_conf.intr_type = GPIO_INTR_DISABLE;        // Sin interrupciones
+io_conf.pin_bit_mask = (1ULL << GPIO_NUM_2,); // Selecciona GPIO2
 io_conf.mode = GPIO_MODE_OUTPUT;              // Modo salida
-io_conf.pin_bit_mask = (1ULL << GPIO_NUM_2);  // Pin GPIO2
-io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE;
-io_conf.pull_up_en = GPIO_PULLUP_DISABLE;
+io_conf.intr_type = GPIO_INTR_DISABLE;        // Sin interrupciones
+io_conf.pull_up_en = GPIO_PULLUP_DISABLE;     // Sin pull-up
+io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE; // Sin pull-down
 gpio_config(&io_conf);</code></pre>
+  <button class="copy-btn">Copiar</button>
+</div>
+
+<p>En caso que quisieramos configurar varios pines a la vez. Añadimos los pines necesarios..</p>
+
+<div class="code-block-container">
+  <pre><code>
+io_conf.pin_bit_mask = (1ULL << GPIO_NUM_2,) 
+                     | (1ULL << GPIO_NUM_3,) 
+                     | (1ULL << GPIO_NUM_4,) ; // Selecciona GPIO2 GPIO03 y GPIO4
+</code></pre>
   <button class="copy-btn">Copiar</button>
 </div>
 
@@ -91,12 +113,7 @@ gpio_config(&io_conf);</code></pre>
   <strong>⚠️ Advertencia:</strong> <code>gpio_config()</code> sobrescribe todas las configuraciones previas del pin. Úsala con cuidado si el pin tiene múltiples funciones (ej. GPIO + ADC).
 </div>
 
-<h2>Pines con limitaciones</h2>
-<ul>
-  <li><strong>GPIO34–GPIO39</strong>: Solo pueden usarse como <em>entradas</em>. No tienen pull-up/down habilitables por software.</li>
-  <li><strong>Strapping pins</strong> (<code>GPIO0, 2, 5, 12, 15</code>): Su estado durante el arranque afecta el modo de inicio del chip.</li>
-  <li><strong>ADC2</strong>: No usable cuando Wi-Fi está activo. Prefiere ADC1 (GPIO32–39) en aplicaciones con Wi-Fi.</li>
-</ul>
+<p>En este ejemplo, hemos configurado el GPIO2 como una salida simple sin resistencias pull-up o pull-down. La máscara de bits (pin_bit_mask) utiliza un desplazamiento de bits para seleccionar el pin específico que queremos configurar.</p>
 
 <h2>Verificación de configuración</h2>
 <p>Usa <code>gpio_dump_io_configuration()</code> para depurar:</p>
@@ -106,39 +123,220 @@ gpio_config(&io_conf);</code></pre>
 gpio_dump_io_configuration(NULL, (1ULL << GPIO_NUM_2));</code></pre>
   <button class="copy-btn">Copiar</button>
 </div>
+<h2>Tutorial Práctico: Configurar un Pin como SALIDA</h2>
+<h3>Encender un LED</h3>
+<p>Nuestro objetivo será configurar un pin para que pueda enviar una señal de "encendido" (nivel alto) o "apagado" (nivel bajo), perfecto para controlar un LED.:</p>
 
-<h2>Ejercicio: Autoevaluación</h2>
-<p>Responde las siguientes preguntas para comprobar tu comprensión.</p>
-
-<div class="quiz-container" id="quiz">
-  <div class="quiz-question">
-    <p><strong>1. ¿Qué función configura múltiples aspectos de un GPIO en un solo paso?</strong></p>
-    <label><input type="radio" name="q1" value="0"> gpio_set_direction</label>
-    <label><input type="radio" name="q1" value="1"> gpio_config</label>
-    <label><input type="radio" name="q1" value="2"> gpio_pad_select</label>
-    <label><input type="radio" name="q1" value="3"> gpio_reset</label>
-    <div class="feedback" id="f1"></div>
-  </div>
-
-  <div class="quiz-question">
-    <p><strong>2. ¿Qué pines solo pueden usarse como entrada?</strong></p>
-    <label><input type="radio" name="q2" value="0"> GPIO0–GPIO5</label>
-    <label><input type="radio" name="q2" value="1"> GPIO12–GPIO15</label>
-    <label><input type="radio" name="q2" value="2"> GPIO34–GPIO39</label>
-    <label><input type="radio" name="q2" value="3"> GPIO25–GPIO27</label>
-    <div class="feedback" id="f2"></div>
-  </div>
-
-  <div class="quiz-question">
-    <p><strong>3. ¿Qué ocurre si usas ADC2 con Wi-Fi activo?</strong></p>
-    <label><input type="radio" name="q3" value="0"> Funciona normalmente</label>
-    <label><input type="radio" name="q3" value="1"> No puede usarse</label>
-    <label><input type="radio" name="q3" value="2"> Requiere calibración</label>
-    <label><input type="radio" name="q3" value="3"> Se desactiva automáticamente</label>
-    <div class="feedback" id="f3"></div>
-  </div>
-
-  <button id="check-answers" class="btn-primary">Verificar respuestas</button>
+<ul>
+<li>Estamos trabajando en lenguaje C por lo tanto lo primero que vemos en el código son los archivos de cabecera, los cuales se definen con la directiva "#include" seguida del nombre del archivo de cabecera entre comillas "......" o corchetes <.......> en el caso de los sistemas enbebidos se pueden utilizar indistintamente.</li>
+<div class="code-block-container">
+  <pre><code>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
+</code></pre>
+</div>
+<li>Seguidamente va la funcion principal del codigo "C" la funcion app_main() en ESP-IDF es el punto de entrada de la aplicación, similar a la función main() en un programa de C estándar. </li>
+<div class="code-block-container">
+  <pre><code>
+void app_main(void) {
+</code></pre>
+</div>
+<li> Definimos la Configuración: Declaramos una variable del tipo <strong>gpio_config_t</strong>. 
+<div class="code-block-container">
+  <pre><code>
+gpio_config_t io_conf = {};
+</code></pre>
+</div>
+Luego, rellenamos sus miembros. Para una salida simple, queremos el modo <strong>GPIO_MODE_OUTPUT</strong> y no necesitamos las resistencias <strong>pull-up</strong> o <strong>pull-down</strong> ni tampoco necesitamos habilitar las interrupciones.
+<div class="code-block-container">
+  <pre><code>
+io_conf.pin_bit_mask = (1ULL << GPIO_NUM_2,); // Selecciona GPIO2
+io_conf.mode = GPIO_MODE_OUTPUT;              // Modo salida
+io_conf.intr_type = GPIO_INTR_DISABLE;        // Sin interrupciones
+io_conf.pull_up_en = GPIO_PULLUP_DISABLE;     // Sin pull-up
+io_conf.pull_down_en = GPIO_PULLDOWN_DISABLE; // Sin pull-down
+</code></pre>
+</div></li>
+<li> Aplicar la Configuración: Una vez que nuestra estructura io_conf está lista, se la pasamos a la función <strong>gpio_config()</strong>para que aplique los cambios a los pines seleccionados.</li>
+<div class="code-block-container">
+  <pre><code>
+gpio_config(&io_conf); // Como se ha explicado antes es lafuncion que aplique los cambios a los pines seleccionados 
+</code></pre>
+</div>
+<li> Creamos el bucle infinito,con el bucle<strong>while(true){codigo que se repite}</strong> Imagina que el bucle while es como "mientras ("while" en ingles) algo sea verdad "(true) verdad en ingles"", sigue haciendo esto".</li>
+<div class="code-block-container">
+  <pre><code>
+ while(true) {codigo del loop}; // Repetimos el bloque de codigo contenido entre corchetes indefinidamente
+</code></pre>
+</div>
+<li> Controlamos el Nivel Lógico: Con el pin ya configurado como salida, usamos la función gpio_set_level(para poner el pin en el nivel que necesitamos en este caso alto 1 )<strong>gpio_set_level()</strong> para controlar su estado. Le pasamos el número del pin y el nivel deseado: 1 para alto (encender) y 0 para bajo (apagar).</li>
+<div class="code-block-container">
+  <pre><code>
+ gpio_set_level(GPIO_NUM_2, 1); // Pone GPIO2 en estado alto (enciende el LED)
+</code></pre>
+</div>
+<li>Con vTaskDelay() detenemos la tarea actual. Es la forma de ESP-IDF de hacer pausas. No es un delay normal en C. Es la forma MÁS fácil y correcta de decir: "Espera 1 segundo" 1000 TICKS = 1 segundo por lo tanto 1 TICK equvaldrá a 1 milisegundo</li>
+<div class="code-block-container">
+  <pre><code>
+ vTaskDelay(pdMS_TO_TICKS(1000));// Espera 1 segundo 
+</code></pre>
 </div>
 
-<?php include __DIR__ . '/../../../includes/footer.php'; ?>
+<li> Volvemos a usar la función gpio_set_level() para poner el pin en el nivel que necesitamos en este otro caso bajo 0 )</li>
+<div class="code-block-container">
+  <pre><code>
+ gpio_set_level(GPIO_NUM_2, 0); // Pone GPIO2 en estado bajo (apaga el LED)
+</code></pre>
+</div>
+<li>Con vTaskDelay() detenemos la tarea actual. 1000 TICKS = 1 segundo por lo tanto 1 TICK equivaldrá a 1 milisegundo</li>
+<div class="code-block-container">
+  <pre><code>
+ vTaskDelay(pdMS_TO_TICKS(1000));// Espera 1 segundo 
+</code></pre>
+</div>
+</ul>
+
+<h3>Codigo completo operativo 1</h3>
+<p>Con <strong>vTaskDelay()</strong> detenemos la tarea actual. 1000 TICKS = 1 segundo por lo tanto 1 TICK equivaldrá a 1 milisegundo</p>
+<div class="code-block-container">
+  <pre><code>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
+
+extern "C" void app_main(void){
+    gpio_config_t io_config = {};
+    io_config.pin_bit_mask = (1ULL << GPIO_NUM_2);// Selecciona GPIO2       
+    io_config.mode = GPIO_MODE_OUTPUT;              // Modo salida
+    io_config.intr_type = GPIO_INTR_DISABLE;// Sin interrupciones
+    io_config.pull_up_en = GPIO_PULLUP_DISABLE;// sin
+    io_config.pull_down_en = GPIO_PULLDOWN_DISABLE;// Sin pull-down
+    // Aplicar la configuración
+    gpio_config(&io_config);
+
+   while(true){
+        //Encendemos el LED (nivel del pin número 2 alto = 1)
+        gpio_set_level(GPIO_NUM_2, 1);
+        vTaskDelay(pdMS_TO_TICKS(1000));// Esperar 1 segundo
+
+        //Apagamos el LED (nivel del pin número 2 bajo = 0)
+        gpio_set_level(GPIO_NUM_2, 0);
+        vTaskDelay(pdMS_TO_TICKS(1000));// Esperar 1 segundo
+   }
+
+}
+</code></pre>
+</div>
+</ul>
+<h2>Configurar un pin como entrada</h2>
+<h3>Leer estado de un botón</h3>
+<p>Vamos a añadir un botón para controlar el estado del LED. El botón cambiará el estado del LED cada vez que se presione. Para ello necesitamos:</p>
+<ol>
+  <li>Configurar un pin como entrada para el botón</li>
+  <li>Leer el estado del botón y cambiar el estado del LED cuando se presione</li>
+</ol>
+<p>Una cosa a tener en cuenta es el rebote (debounce en ingles) para evitar multiples detecciones por una sola pulsación</p>
+<p>En este ejemplo, vamos a hacer un control básico sin debounce muy elaborado, solo con un retardo simple. </p>
+<p>Vamos a conectar el botón en un pin (por ejemplo GPIO_NUM_4) y usaremos una resistencia pull-up interna, por lo que cuando se presione el botón, leeremos un nivel bajo.Para ello vamos a realizar los siguientes pasos:</p>
+<ul>
+<li>Configurar el pin del botón como entrada con resistencia pull-up interna que incluye el propio esp32. Colocarlo a continuacion de la configuracione del pin del LED</li>
+<div class="code-block-container">
+  <pre><code>
+  // Configurar botón como entrada con resistencia pull-up
+    gpio_config_t config_boton = {};
+        config_boton.pin_bit_mask = (1ULL << BOTON_PIN);// Selecciona el pin del botón
+        config_boton.mode = GPIO_MODE_INPUT;// Modo entrada
+        config_boton.pull_up_en = GPIO_PULLUP_ENABLE;// Activar pull-up interno
+        config_boton.pull_down_en = GPIO_PULLDOWN_DISABLE;// Sin pull-down
+        config-boton.intr_type = GPIO_INTR_DISABLE;// Sin interrupciones
+    // Aplicar la configuración
+    gpio_config(&config_boton);
+</code></pre>
+</div>
+<li>Creamos una variable entera para poner el estado del led a 0 o sea apagado </li>
+<div class="code-block-container">
+  <pre><code>
+int estado_led = 0; // Variable para el estado del LED (0 = apagado, 1 = encendido)
+</code></pre>
+</div>
+<li>En el bucle "while()" Leer el estado del botón.</li>
+<div class="code-block-container">
+  <pre><code>
+int estado_boton = gpio_get_level(BOTON_PIN); // Leer el estado del botón
+</code></pre>
+</div>
+<li>Si (condicional if()) el botón está resionado (nIvel bajo) cambiar el estado del led y esperar un poco par evitar rebotes.</li>
+<div class="code-block-container">
+  <pre><code>
+if (estado_boton == 0) { // Botón presionado (nivel bajo)
+    estado_led = !estado_led; // Cambiar el estado del LED
+    gpio_set_level(LED_PIN, estado_led); // Actualizar el estado del LED
+    vTaskDelay(pdMS_TO_TICKS(300)); // Retardo para evitar rebotes
+}
+</code></pre>
+</div>
+<li>Realizamos una breve espera antes de leer el botón otra vez </li>
+<div class="code-block-container">
+  <pre><code>
+vTaskDelay(pdMS_TO_TICKS(50)); // Pequeña espera antes de la siguiente lectura
+</code></pre>
+</div>
+</ul>
+<h3>Codigo completo operativo 2</h3>
+<p>El código completo quedaría así:</p>
+<div class="code-block-container">
+  <pre><code>
+#include "freertos/FreeRTOS.h"
+#include "freertos/task.h"
+#include "driver/gpio.h"
+
+#define LED_PIN GPIO_NUM_2 // Pin del LED
+#define BOTON_PIN GPIO_NUM_4 // Pin del botón
+
+extern "C" void app_main(void){
+    // Configurar LED como salida
+    gpio_config_t io_config = {};
+    io_config.pin_bit_mask = (1ULL << LED_PIN);// Selecciona GPIO2       
+    io_config.mode = GPIO_MODE_OUTPUT;              // Modo salida
+    io_config.intr_type = GPIO_INTR_DISABLE;// Sin interrupciones
+    io_config.pull_up_en = GPIO_PULLUP_DISABLE;// sin
+    io_config.pull_down_en = GPIO_PULLDOWN_DISABLE;// Sin pull-down
+    // Aplicar la configuración
+    gpio_config(&io_config);
+
+    // Configurar botón como entrada con resistencia pull-up
+    gpio_config_t config_boton = {};
+        config_boton.pin_bit_mask = (1ULL << BOTON_PIN);// Selecciona el pin del botón
+        config_boton.mode = GPIO_MODE_INPUT;// Modo entrada
+        config_boton.pull_up_en = GPIO_PULLUP_ENABLE;// Activar pull-up interno
+        config_boton.pull_down_en = GPIO_PULLDOWN_DISABLE;// Sin pull-down
+        config_boton.intr_type = GPIO_INTR_DISABLE;// Sin interrupciones
+    // Aplicar la configuración
+    gpio_config(&config_boton);
+
+   int estado_led = 0; // Variable para el estado del LED (0 = apagado, 1 = encendido)
+
+   while(true){
+        int estado_boton = gpio_get_level(BOTON_PIN); // Leer el estado del botón
+
+        if (estado_boton == 0) { // Botón presionado (nivel bajo)
+            estado_led = !estado_led; // Cambiar el estado del LED
+            gpio_set_level(LED_PIN, estado_led); // Actualizar el estado del LED
+            vTaskDelay(pdMS_TO_TICKS(300)); // Retardo para evitar rebotes
+        }
+
+        vTaskDelay(pdMS_TO_TICKS(50)); // Pequeña espera antes de la siguiente lectura
+   }
+
+}
+</code></pre>
+</div>
+<!-- Botón al cuestionario -->
+<div class="quiz-button-container">
+  <a href="<?php echo BASE_URL; ?>/content/api-reference/gpio/quiz/configuration-quiz.php" class="btn-primary">
+    📝 Ir al cuestionario
+  </a>
+</div>
+
+
